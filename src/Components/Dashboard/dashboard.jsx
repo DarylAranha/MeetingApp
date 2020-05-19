@@ -1,47 +1,98 @@
 import React, { Component } from 'react'
+import {DayPilot, DayPilotCalendar, DayPilotNavigator} from "daypilot-pro-react";
 import './dashboard.scss';
 
+const styles = {
+  left: {
+    float: "left",
+    width: "220px"
+  },
+  main: {
+    marginLeft: "220px"
+  }
+};
+
 export class dashboard extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      viewType: "Week",
+      durationBarVisible: false,
+      timeRangeSelectedHandling: "Enabled",
+      onTimeRangeSelected: args => {
+        let dp = this.calendar;
+        DayPilot.Modal.prompt("Create a new event:", "Event 1").then(function(modal) {
+          dp.clearSelection();
+          if (!modal.result) { return; }
+          dp.events.add(new DayPilot.Event({
+            start: args.start,
+            end: args.end,
+            id: DayPilot.guid(),
+            text: modal.result
+          }));
+        });
+      },
+      eventDeleteHandling: "Update",
+      onEventClick: args => {
+        let dp = this.calendar;
+        DayPilot.Modal.prompt("Update event text:", args.e.text()).then(function(modal) {
+          if (!modal.result) { return; }
+          args.e.data.text = modal.result;
+          dp.events.update(args.e);
+        });
+      },
+    };
+  }
+
+  componentDidMount() {
+
+    // load event data
+    this.setState({
+      startDate: "2019-09-15",
+      events: [
+        {
+          id: 1,
+          text: "Event 1",
+          start: "2019-09-16T10:30:00",
+          end: "2019-09-16T13:00:00"
+        },
+        {
+          id: 2,
+          text: "Event 2",
+          start: "2019-09-17T12:00:00",
+          end: "2019-09-17T14:00:00",
+          backColor: "#38761d"
+        }
+      ]
+    });
+  }
+
   render() {
+    var {...config} = this.state;
     return (
-      <div className="dashboard-content">
-          <div class="container">
-  <h2>Modal Example</h2>
-  {/* <!-- Button to Open the Modal --> */}
-  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">
-    Open modal
-  </button>
-
-  {/* <!-- The Modal --> */}
-  <div class="modal" id="myModal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-      
-        {/* <!-- Modal Header --> */}
-        <div class="modal-header">
-          <h4 class="modal-title">Modal Heading</h4>
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
+      <div>
+        <div style={styles.left}>
+          <DayPilotNavigator
+            selectMode={"week"}
+            showMonths={3}
+            skipMonths={3}
+            onTimeRangeSelected={ args => {
+              this.setState({
+                startDate: args.day
+              });
+            }}
+          />
         </div>
-        
-        {/* <!-- Modal body --> */}
-        <div class="modal-body">
-          Modal body..
+        <div style={styles.main}>
+        <DayPilotCalendar
+          {...config}
+          ref={component => {
+            this.calendar = component && component.control;
+          }}
+        />
         </div>
-        
-        {/* <!-- Modal footer --> */}
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-        </div>
-        
       </div>
-    </div>
-  </div>
-  
-</div>
-
-      </div>
-    )
+    );
   }
 }
-
 export default dashboard
